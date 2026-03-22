@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HalluciNet</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #1a1a2e;
+      color: #e0e0e0;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* Browser chrome */
+    .browser-chrome {
+      background: #16213e;
+      border-bottom: 1px solid #0f3460;
+      flex-shrink: 0;
+    }
+
+    .tab-bar {
+      display: flex;
+      align-items: center;
+      padding: 8px 12px 0;
+      gap: 2px;
+    }
+
+    .tab {
+      background: #1a1a2e;
+      border: 1px solid #0f3460;
+      border-bottom: none;
+      border-radius: 8px 8px 0 0;
+      padding: 6px 16px;
+      font-size: 12px;
+      color: #a0a0c0;
+      max-width: 200px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      cursor: default;
+    }
+
+    .tab.active {
+      background: #0f3460;
+      color: #e0e0ff;
+    }
+
+    .toolbar {
+      display: flex;
+      align-items: center;
+      padding: 8px 12px;
+      gap: 8px;
+    }
+
+    .nav-btn {
+      background: none;
+      border: 1px solid #0f3460;
+      color: #a0a0c0;
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      transition: all 0.15s;
+    }
+
+    .nav-btn:hover:not(:disabled) {
+      background: #0f3460;
+      color: #e0e0ff;
+    }
+
+    .nav-btn:disabled {
+      opacity: 0.3;
+      cursor: default;
+    }
+
+    .url-bar {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      background: #1a1a2e;
+      border: 1px solid #0f3460;
+      border-radius: 20px;
+      padding: 0 16px;
+      height: 34px;
+      transition: border-color 0.2s;
+    }
+
+    .url-bar:focus-within {
+      border-color: #e94560;
+    }
+
+    .url-bar .lock {
+      color: #e94560;
+      margin-right: 8px;
+      font-size: 13px;
+    }
+
+    .url-bar input {
+      flex: 1;
+      background: none;
+      border: none;
+      outline: none;
+      color: #e0e0ff;
+      font-size: 14px;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+    }
+
+    .url-bar input::placeholder {
+      color: #4a4a6a;
+    }
+
+    .loading-bar {
+      height: 3px;
+      background: #0f3460;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .loading-bar.active::after {
+      content: '';
+      position: absolute;
+      left: -40%;
+      width: 40%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, #e94560, #e94560, transparent);
+      animation: loading 1s ease-in-out infinite;
+    }
+
+    @keyframes loading {
+      0% { left: -40%; }
+      100% { left: 100%; }
+    }
+
+    /* Content area */
+    .content-area {
+      flex: 1;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .page-frame {
+      width: 100%;
+      height: 100%;
+      border: none;
+      background: #fff;
+    }
+
+    /* Start page */
+    .start-page {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      text-align: center;
+      padding: 20px;
+    }
+
+    .start-page h1 {
+      font-size: 48px;
+      font-weight: 300;
+      color: #e94560;
+      margin-bottom: 8px;
+      letter-spacing: -1px;
+    }
+
+    .start-page h1 span {
+      color: #e0e0ff;
+    }
+
+    .start-page p {
+      color: #6a6a8a;
+      font-size: 16px;
+      margin-bottom: 32px;
+    }
+
+    .quick-links {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      max-width: 600px;
+    }
+
+    .quick-link {
+      background: rgba(15, 52, 96, 0.5);
+      border: 1px solid #0f3460;
+      border-radius: 12px;
+      padding: 16px 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-decoration: none;
+    }
+
+    .quick-link:hover {
+      background: rgba(233, 69, 96, 0.15);
+      border-color: #e94560;
+      transform: translateY(-2px);
+    }
+
+    .quick-link .icon {
+      font-size: 28px;
+      margin-bottom: 8px;
+    }
+
+    .quick-link .label {
+      color: #a0a0c0;
+      font-size: 12px;
+    }
+
+    .status-bar {
+      background: #16213e;
+      border-top: 1px solid #0f3460;
+      padding: 4px 12px;
+      font-size: 11px;
+      color: #4a4a6a;
+      flex-shrink: 0;
+      display: flex;
+      justify-content: space-between;
+    }
+  </style>
+</head>
+<body>
+  <div class="browser-chrome">
+    <div class="tab-bar">
+      <div class="tab active" id="active-tab">New Tab</div>
+    </div>
+    <div class="toolbar">
+      <button class="nav-btn" id="btn-back" disabled title="Back">&#9664;</button>
+      <button class="nav-btn" id="btn-forward" disabled title="Forward">&#9654;</button>
+      <button class="nav-btn" id="btn-reload" title="Reload">&#8635;</button>
+      <button class="nav-btn" id="btn-home" title="Home">&#8962;</button>
+      <div class="url-bar">
+        <span class="lock">&#9672;</span>
+        <input type="text" id="url-input" placeholder="Enter any URL — it will be hallucinated..." autofocus>
+      </div>
+    </div>
+    <div class="loading-bar" id="loading-bar"></div>
+  </div>
+
+  <div class="content-area" id="content-area">
+    <div class="start-page" id="start-page">
+      <h1>Halluci<span>Net</span></h1>
+      <p>An internet entirely dreamed up by AI. Type any URL to begin.</p>
+      <div class="quick-links">
+        <div class="quick-link" data-url="https://www.google.com">
+          <div class="icon">&#127758;</div>
+          <div class="label">Google</div>
+        </div>
+        <div class="quick-link" data-url="https://en.wikipedia.org/wiki/Artificial_Intelligence">
+          <div class="icon">&#128218;</div>
+          <div class="label">Wikipedia</div>
+        </div>
+        <div class="quick-link" data-url="https://news.ycombinator.com">
+          <div class="icon">&#128240;</div>
+          <div class="label">Hacker News</div>
+        </div>
+        <div class="quick-link" data-url="https://www.reddit.com/r/all">
+          <div class="icon">&#128172;</div>
+          <div class="label">Reddit</div>
+        </div>
+        <div class="quick-link" data-url="https://twitter.com/explore">
+          <div class="icon">&#128038;</div>
+          <div class="label">Twitter</div>
+        </div>
+        <div class="quick-link" data-url="https://www.amazon.com">
+          <div class="icon">&#128722;</div>
+          <div class="label">Amazon</div>
+        </div>
+        <div class="quick-link" data-url="https://github.com/trending">
+          <div class="icon">&#128187;</div>
+          <div class="label">GitHub</div>
+        </div>
+        <div class="quick-link" data-url="https://www.nytimes.com">
+          <div class="icon">&#128176;</div>
+          <div class="label">NY Times</div>
+        </div>
+      </div>
+    </div>
+    <iframe class="page-frame" id="page-frame" sandbox="allow-same-origin" style="display:none;"></iframe>
+  </div>
+
+  <div class="status-bar">
+    <span id="status-text">Ready</span>
+    <span id="status-info">HalluciNet v1.0</span>
+  </div>
+
+  <script>
+    const urlInput = document.getElementById('url-input');
+    const pageFrame = document.getElementById('page-frame');
+    const startPage = document.getElementById('start-page');
+    const loadingBar = document.getElementById('loading-bar');
+    const activeTab = document.getElementById('active-tab');
+    const btnBack = document.getElementById('btn-back');
+    const btnForward = document.getElementById('btn-forward');
+    const btnReload = document.getElementById('btn-reload');
+    const statusText = document.getElementById('status-text');
+
+    let history = [];
+    let historyIndex = -1;
+    let currentUrl = '';
+    let isLoading = false;
+
+    function normalizeUrl(input) {
+      input = input.trim();
+      if (!input) return '';
+      if (!/^https?:\/\//i.test(input)) {
+        if (input.includes('.') && !input.includes(' ')) {
+          input = 'https://' + input;
+        } else {
+          input = 'https://www.google.com/search?q=' + encodeURIComponent(input);
+        }
+      }
+      return input;
+    }
+
+    function updateNavButtons() {
+      btnBack.disabled = historyIndex <= 0;
+      btnForward.disabled = historyIndex >= history.length - 1;
+    }
+
+    function setTabTitle(url) {
+      try {
+        const u = new URL(url);
+        activeTab.textContent = u.hostname + (u.pathname !== '/' ? u.pathname : '');
+      } catch {
+        activeTab.textContent = url;
+      }
+    }
+
+    async function navigate(url, pushHistory = true) {
+      if (isLoading) return;
+      url = normalizeUrl(url);
+      if (!url) return;
+
+      isLoading = true;
+      urlInput.value = url;
+      currentUrl = url;
+      setTabTitle(url);
+      loadingBar.classList.add('active');
+      statusText.textContent = 'Connecting to HalluciNet...';
+
+      if (pushHistory) {
+        history = history.slice(0, historyIndex + 1);
+        history.push(url);
+        historyIndex = history.length - 1;
+        window.history.pushState({ halluciUrl: url }, '', '/' + url);
+      }
+      updateNavButtons();
+
+      startPage.style.display = 'none';
+      pageFrame.style.display = 'block';
+
+      let html = '';
+      const referrer = historyIndex > 0 ? history[historyIndex - 1] : null;
+
+      try {
+        const res = await fetch('/api/browse', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url, referrer }),
+        });
+
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          buffer = lines.pop();
+
+          for (const line of lines) {
+            if (!line.startsWith('data: ')) continue;
+            try {
+              const data = JSON.parse(line.slice(6));
+              if (data.error) throw new Error(data.error);
+              if (data.done) break;
+              if (data.html) {
+                html += data.html;
+                statusText.textContent = 'Receiving data...';
+              }
+            } catch (e) {
+              if (e.message && !e.message.includes('JSON')) throw e;
+            }
+          }
+
+          // Progressive render
+          renderPage(html);
+        }
+      } catch (err) {
+        html = `<html><body style="font-family:sans-serif;padding:40px;background:#1a1a2e;color:#e0e0e0;">
+          <h1 style="color:#e94560;">This site can't be reached</h1>
+          <p>${url} took too long to respond.</p>
+          <p style="color:#888;">${err.message}</p>
+        </body></html>`;
+      }
+
+      renderPage(html, true);
+      loadingBar.classList.remove('active');
+      statusText.textContent = 'Done';
+      isLoading = false;
+    }
+
+    function renderPage(html, final = false) {
+      const doc = pageFrame.contentDocument;
+      doc.open();
+      doc.write(html);
+      if (final) doc.close();
+
+      // Intercept link clicks to navigate within HalluciNet
+      if (final) {
+        doc.querySelectorAll('a[href]').forEach(a => {
+          a.addEventListener('click', e => {
+            e.preventDefault();
+            const href = a.getAttribute('href');
+            if (href && href !== '#') {
+              try {
+                const resolved = new URL(href, currentUrl).href;
+                navigate(resolved);
+              } catch {
+                navigate(href);
+              }
+            }
+          });
+        });
+      }
+    }
+
+    // Event listeners
+    urlInput.addEventListener('keydown', e => {
+      if (e.key === 'Enter') navigate(urlInput.value);
+    });
+
+    btnBack.addEventListener('click', () => {
+      if (historyIndex > 0) {
+        historyIndex--;
+        navigate(history[historyIndex], false);
+      }
+    });
+
+    btnForward.addEventListener('click', () => {
+      if (historyIndex < history.length - 1) {
+        historyIndex++;
+        navigate(history[historyIndex], false);
+      }
+    });
+
+    btnReload.addEventListener('click', () => {
+      if (currentUrl) navigate(currentUrl, false);
+    });
+
+    document.getElementById('btn-home').addEventListener('click', () => {
+      startPage.style.display = '';
+      pageFrame.style.display = 'none';
+      currentUrl = '';
+      urlInput.value = '';
+      activeTab.textContent = 'New Tab';
+      statusText.textContent = 'Ready';
+      window.history.pushState({}, '', '/');
+    });
+
+    document.querySelectorAll('.quick-link').forEach(el => {
+      el.addEventListener('click', () => navigate(el.dataset.url));
+    });
+
+    // Focus URL bar on Cmd/Ctrl+L
+    document.addEventListener('keydown', e => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'l') {
+        e.preventDefault();
+        urlInput.focus();
+        urlInput.select();
+      }
+    });
+
+    // Handle browser back/forward
+    window.addEventListener('popstate', (e) => {
+      const halluciUrl = e.state?.halluciUrl;
+      if (halluciUrl && halluciUrl !== currentUrl) {
+        navigate(halluciUrl, false);
+      }
+    });
+
+    // On page load, navigate to URL from path if present
+    (() => {
+      const path = window.location.pathname.slice(1); // remove leading /
+      if (path && path.startsWith('http')) {
+        navigate(decodeURIComponent(path));
+      }
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: halluci-net
+    runtime: node
+    buildCommand: npm install
+    startCommand: node server.js
+    envVars:
+      - key: CEREBRAS_API_KEY
+        sync: false

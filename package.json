@@ -1,0 +1,15 @@
+{
+  "name": "halluci-net",
+  "version": "1.0.0",
+  "description": "Browse an internet entirely hallucinated by an LLM",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.39.0",
+    "express": "^4.21.0",
+    "openai": "^6.32.0"
+  }
+}
