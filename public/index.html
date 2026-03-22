@@ -354,7 +354,7 @@
         history = history.slice(0, historyIndex + 1);
         history.push(url);
         historyIndex = history.length - 1;
-        window.history.pushState({ halluciUrl: url }, '', '/' + url);
+        window.location.hash = url;
       }
       updateNavButtons();
 
@@ -470,7 +470,7 @@
       urlInput.value = '';
       activeTab.textContent = 'New Tab';
       statusText.textContent = 'Ready';
-      window.history.pushState({}, '', '/');
+      window.history.pushState({}, '', window.location.pathname);
     });
 
     document.querySelectorAll('.quick-link').forEach(el => {
@@ -487,19 +487,17 @@
     });
 
     // Handle browser back/forward
-    window.addEventListener('popstate', (e) => {
-      const halluciUrl = e.state?.halluciUrl;
-      if (halluciUrl && halluciUrl !== currentUrl) {
-        navigate(halluciUrl, false);
+    window.addEventListener('hashchange', () => {
+      const hashUrl = window.location.hash.slice(1);
+      if (hashUrl && hashUrl !== currentUrl) {
+        navigate(hashUrl, false);
       }
     });
 
-    // On page load, navigate to URL from path if present
+    // On page load, navigate to URL from hash if present
     (() => {
-      const path = window.location.pathname.slice(1); // remove leading /
-      if (path && path.startsWith('http')) {
-        navigate(decodeURIComponent(path));
-      }
+      const hashUrl = window.location.hash.slice(1);
+      if (hashUrl) navigate(hashUrl);
     })();
   </script>
 </body>

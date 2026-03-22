@@ -71,11 +71,6 @@ app.post("/api/browse", async (req, res) => {
   }
 });
 
-// Catch-all: serve index.html for any non-API route (SPA routing)
-app.get("*", (req, res) => {
-  res.sendFile(join(__dirname, "public", "index.html"));
-});
-
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`HalluciNet running at http://localhost:${PORT}`);
